@@ -1,0 +1,91 @@
+### aip
+### http://aiptes.vanke.com/ollama
+POST http://aiptes.vanke.com/qwen/v1/completions HTTP/1.1
+Content-Type: 'application/json'
+
+{
+    "model": "starcoder2-7b",
+    "prompt": "<fim_prefix>bool BuildWallProfile::calPreferredWallsNoRecursion(const std::vector<ElementId>& wallConnectionIds, vk::JointLocationType joinType,\n                                                    const std::set<ElementId>& relatedWallIds, std::vector<std::int64_t>& sortedIds, VKWall*& pWall,\n                                                    ElementId& searchWall, std::vector<ElementId>& wallStack)\n{\n    DEBUG_WARN_AND_RETURN_FALSE_UNLESS(m_pDoc, \"VkDocument is nullptr\", \"chenq222\", \"2023/10/26\");\n    bool isContinue = false;\n    vk<fim_suffix><fim_middle>",
+    "max_tokens": 100,
+    "temperature": 0,
+    "stop":["\n","<fim_prefix>","<fim_suffix>","<fim_middle>","<|endoftext|>","<file_sep>"],
+    "stream": false
+}
+
+### ollama
+### http://aiptes.vanke.com/ollama
+POST http://localhost:11434/api/generate HTTP/1.1
+Content-Type: 'application/json'
+
+{
+    "model": "starcoder2:3b",
+    "prompt": "<fim_prefix>bool BuildWallProfile::calPreferredWallsNoRecursion(const std::vector<ElementId>& wallConnectionIds, vk::JointLocationType joinType,\n                                                    const std::set<ElementId>& relatedWallIds, std::vector<std::int64_t>& sortedIds, VKWall*& pWall,\n                                                    ElementId& searchWall, std::vector<ElementId>& wallStack)\n{\n    DEBUG_WARN_AND_RETURN_FALSE_UNLESS(m_pDoc, \"VkDocument is nullptr\", \"chenq222\", \"2023/10/26\");\n    bool isContinue = false;\n    vk<fim_suffix><fim_middle>",
+    "options": {
+        "temperature": 0,
+        "num_predict": 100,        
+        "stop":["\n","<fim_prefix>","<fim_suffix>","<fim_middle>","<|endoftext|>","<file_sep>"]
+    },
+    "stream": false
+}
+
+### ollama codeqwen
+POST http://127.0.0.1:11434/api/generate HTTP/1.1
+Content-Type: 'application/json'
+
+{
+    "model": "codeqwen:7b",
+    "prompt": "<fim_prefix>def quicksort(arr):    if len(arr) <= 1:        return arr    pivot = arr[len(arr) // 2]    <fim_suffix>    middle = [x for x in arr if x == pivot]    right = [x for x in arr if x > pivot]    return quicksort(left) + middle + quicksort(right)<fim_middle>",
+    "options": {
+        "temperature": 0,
+        "num_predict": 100,        
+        "stop":["\n","<fim_prefix>","<fim_suffix>","<fim_middle>","<|endoftext|>","<file_sep>"]
+    },
+    "stream": false
+}
+
+### ollma codegemma
+POST http://localhost:11434/api/generate HTTP/1.1
+Content-Type: 'application/json'
+
+{
+    "model": "codegemma:2b",
+    "prompt": "<|fim_prefix|>if __name__<|fim_middle|>",
+    "options": {
+        "temperature": 0,
+        "num_predict": 128, 
+        "top_p": 0.9,       
+        "stop":["<|fim_prefix|>","<|fim_suffix|>","<|fim_middle|>","<|file_separator|>"]
+    },
+    "stream": false
+}
+
+### ollma codellama
+POST http://localhost:11434/api/generate HTTP/1.1
+Content-Type: 'application/json'
+
+{
+    "model": "codellama:7b",
+    "prompt": "<PRE>if __name__<SUF><MID>",
+    "options": {
+        "temperature": 0,
+        "num_predict": 128, 
+        "stop":["<PRE>","<SUF>","<MID>"]
+    },
+    "stream": false
+}
+
+
+### ollma deepseek code
+POST http://localhost:11434/api/generate HTTP/1.1
+Content-Type: 'application/json'
+
+{
+    "model": "deepseek-coder:6.7b",
+    "prompt": "<｜fim▁begin｜>def quick_sort(arr):\n    if len(arr) <= 1:\n        return arr\n    pivot = arr[0]\n    left = []\n    right = []<｜fim▁hole｜>\n<｜fim▁end｜>",
+    "options": {
+        "temperature": 0,
+        "num_predict": 100,        
+        "stop":["<｜fim_begin｜>","<｜fim_end｜>","<｜begin▁of▁sentence｜>","<｜end▁of▁sentence｜>"]
+    },
+    "stream": false
+}

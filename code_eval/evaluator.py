@@ -1,11 +1,11 @@
 import json
-import requests
 import argparse
 import os
 import difflib
 from pathlib import Path
 import logging
 import time  # 导入time模块
+from llm import Starcoder2LLM,CodeGemmaLLM,XinferenceLLM
 
 # 设置日志的配置：日志级别为INFO，日志格式包括时间戳、日志级别和日志消息
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -19,31 +19,17 @@ def load_dataset(file_path):
     return tasks
 
 def llm_generate(prompt):
-    """调用本地模型进行代码补全"""
-    url = "http://localhost:11434/api/generate"
-    headers = {'Content-Type': 'application/json'}
-    data = {
-        "model": "starcoder2:3b",
-        "prompt": f"<fim_prefix>{prompt}<fim_suffix><fim_middle>",
-        "options": {
-            "temperature": 0,
-            "num_predict": 100,
-            "stop":["\n","<fim_prefix>","<fim_suffix>","<fim_middle>","<|endoftext|>", "<file_sep>"]
-        },
-        "stream": False
+    
+    llm_option =  {
+        "temperature": 0,
+        "max_tokens": 100,
+        "num_predict": 100
     }
-    response = requests.post(url, headers=headers, json=data)
-    if response.status_code == 200:
-        response_data = response.json()
-        # 根据新的响应格式，直接获取'response'字段
-        if 'response' in response_data:
-            return response_data['response']
-        else:
-            print("No 'response' in response.")
-            return None
-    else:
-        print("Error calling ollama:", response.text)
-        return None
+    # llm = Starcoder2LLM("starcoder2:7b", llm_option)
+    # llm = CodeGemmaLLM("codegemma:2b",llm_option)
+    # llm = XinferenceLLM("custom-llm-normal", llm_option)
+    llm = XinferenceLLM("starcoder2-7b", llm_option)
+    return llm.generate(prompt)
 
 def evaluate_tasks(tasks, results_file_path):
     """评估任务集并将结果保存到jsonl文件"""
@@ -51,7 +37,7 @@ def evaluate_tasks(tasks, results_file_path):
     completed_tasks = 0  # 已完成的任务数
     for task in tasks:
         prompt = task['prompt']
-        logging.info(f"开始调用ollama模型，prompt：{prompt[:10]}...")
+        logging.info(f"开始调用模型，prompt：{prompt[:10]}...")
 
         start_time = time.time()  # 获取调用前的时间戳
         generated_solution = llm_generate(prompt)
@@ -62,13 +48,15 @@ def evaluate_tasks(tasks, results_file_path):
         logging.info(f"调用模型执行时长：{execution_time}秒")
 
         solution = task['solution']
-        solution_no_space = solution.strip()        
+        solution_no_space = solution.strip()
+        generated_solution_no_space = generated_solution.strip()
         
-        # 判断solution去掉空格后是否包含在generated_solution里
-        is_contained = solution_no_space in generated_solution
+        # is_contained = solution_no_space in generated_solution
+        # 判断solution去掉空格后是否与generated_solution相同
+        is_equal = solution_no_space == generated_solution_no_space
         
-        # 如果不包含，则计算相似度
-        if not is_contained:
+        # 如果不相同，则计算相似度
+        if not is_equal:
             similarity = difflib.SequenceMatcher(None, solution_no_space, generated_solution).ratio()
             # 这里假设相似度阈值为0.8，可以根据实际情况调整
             # is_passed = similarity >= 0.8
@@ -79,7 +67,7 @@ def evaluate_tasks(tasks, results_file_path):
         result = {
             "task_id": task['task_id'],
             "passed": is_passed,
-            "similarity": similarity if not is_contained else 1.0,
+            "similarity": similarity if not is_equal else 1.0,
             "solution": solution,
             "generated_solution": generated_solution,
         }
@@ -113,21 +101,24 @@ def evaluate_tasks(tasks, results_file_path):
 
 
 if __name__ == "__main__":
-    # 创建 ArgumentParser 对象
     parser = argparse.ArgumentParser(description="Evaluate tasks based on a given dataset.")
-    # 添加 dataset 参数
-    parser.add_argument('--dataset', type=str, default='dataset/archui_eval.jsonl', help='Path to the dataset file.')
-    # 解析命令行输入的参数
+    parser.add_argument('--dataset', type=str, default='dataset/archui_eval.jsonl', help='Path to the dataset file or directory.')
     args = parser.parse_args()
 
-    # 使用命令行提供的路径加载数据集
-    tasks = load_dataset(args.dataset)
-
-    # 从数据集路径中提取文件名（不包括扩展名）
-    dataset_name = Path(args.dataset).stem
-
-    # 构造结果文件的路径，使其名称与数据集文件名对应
-    results_file_path = os.path.join("eval_result", f"{dataset_name}_results.jsonl")
-
-    accuracy = evaluate_tasks(tasks, results_file_path)
-    print(f"Accuracy: {accuracy*100:.2f}%")
+    if os.path.isdir(args.dataset):
+        # 如果是目录，遍历目录下的所有jsonl文件
+        for file_name in os.listdir(args.dataset):
+            if file_name.endswith('.jsonl'):
+                file_path = os.path.join(args.dataset, file_name)
+                tasks = load_dataset(file_path)
+                dataset_name = os.path.splitext(file_name)[0]
+                results_file_path = os.path.join("eval_result", f"{dataset_name}_results.jsonl")
+                accuracy = evaluate_tasks(tasks, results_file_path)
+                print(f"File: {file_name}, Accuracy: {accuracy*100:.2f}%")
+    else:
+        # 如果是文件，按原有逻辑处理
+        tasks = load_dataset(args.dataset)
+        dataset_name = Path(args.dataset).stem
+        results_file_path = os.path.join("eval_result", f"{dataset_name}_results.jsonl")
+        accuracy = evaluate_tasks(tasks, results_file_path)
+        print(f"Accuracy: {accuracy*100:.2f}%")

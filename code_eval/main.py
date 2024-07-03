@@ -1,6 +1,6 @@
 import argparse
-from code_eval.dataset_processor import process_directory, write_to_file
-from code_eval.evaluator import load_dataset, evaluate_tasks
+from dataset_processor import process_directory, write_to_file
+from evaluator import load_dataset, evaluate_tasks
 
 def main():
     parser = argparse.ArgumentParser(description="Code Eval Tool")

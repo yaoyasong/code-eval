@@ -15,8 +15,6 @@ dist/
 local/
 gh-pages/
 *.egg-info/
-dataset/
-eval_result/
 
 /package-lock.json
 /node_modules/
