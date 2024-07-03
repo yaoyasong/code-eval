@@ -54,7 +54,7 @@ class XinferenceLLM(BaseLLM):
         super().__init__(model_name, options)
 
     def generate(self, prompt):
-        url = "http://aiptes.vanke.com/qwen/v1/completions"
+        url = "http://127.0.0.1:8000/v1/completions"
         headers = {'Content-Type': 'application/json'}       
         data = {
             "model": self.model_name,
